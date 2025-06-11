@@ -8,21 +8,21 @@ SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Schema new_schema1
+-- Schema escambo
 -- -----------------------------------------------------
 
 -- -----------------------------------------------------
--- Schema new_schema1
+-- Schema escambo
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `new_schema1` ;
-USE `new_schema1` ;
+CREATE SCHEMA IF NOT EXISTS `escambo` ;
+USE `escambo` ;
 
 -- -----------------------------------------------------
--- Table `new_schema1`.`livro`
+-- Table `escambo`.`livro`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `new_schema1`.`livro` (
+CREATE TABLE IF NOT EXISTS `escambo`.`livro` (
   `livro_id` INT NOT NULL AUTO_INCREMENT,
-  `livro_titiulo` VARCHAR(255) NOT NULL,
+  `livro_titulo` VARCHAR(255) NOT NULL,
   `livro_autor` VARCHAR(255) NOT NULL,
   `livro_genero` VARCHAR(255) NOT NULL,
   `foto1_livro` VARCHAR(200) NOT NULL,
@@ -33,9 +33,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `new_schema1`.`usuario`
+-- Table `escambo`.`usuario`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `new_schema1`.`usuario` (
+CREATE TABLE IF NOT EXISTS `escambo`.`usuario` (
   `id_usuario` INT NOT NULL AUTO_INCREMENT,
   `usuario_nome` VARCHAR(255) NOT NULL,
   `usuario_email` VARCHAR(255) NOT NULL,
@@ -48,9 +48,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `new_schema1`.`troca`
+-- Table `escambo`.`troca`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `new_schema1`.`troca` (
+CREATE TABLE IF NOT EXISTS `escambo`.`troca` (
   `troca_id` INT NOT NULL AUTO_INCREMENT,
   `troca_data` DATE NOT NULL,
   `troca_status` VARCHAR(255) NOT NULL,
@@ -65,22 +65,22 @@ CREATE TABLE IF NOT EXISTS `new_schema1`.`troca` (
   INDEX `fk_troca_livro2_idx` (`livro_livro_oferecido` ASC) VISIBLE,
   CONSTRAINT `fk_troca_usuario`
     FOREIGN KEY (`usuario_id_proponente`)
-    REFERENCES `new_schema1`.`usuario` (`id_usuario`)
+    REFERENCES `escambo`.`usuario` (`id_usuario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_troca_usuario1`
     FOREIGN KEY (`usuario_id_destinatario`)
-    REFERENCES `new_schema1`.`usuario` (`id_usuario`)
+    REFERENCES `escambo`.`usuario` (`id_usuario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_troca_livro1`
     FOREIGN KEY (`livro_livro_id_desejado`)
-    REFERENCES `new_schema1`.`livro` (`livro_id`)
+    REFERENCES `escambo`.`livro` (`livro_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_troca_livro2`
     FOREIGN KEY (`livro_livro_oferecido`)
-    REFERENCES `new_schema1`.`livro` (`livro_id`)
+    REFERENCES `escambo`.`livro` (`livro_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
