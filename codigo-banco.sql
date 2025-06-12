@@ -89,3 +89,15 @@ ENGINE = InnoDB;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+INSERT INTO `livro` (`livro_titulo`, `livro_autor`, `livro_genero`, `foto1_livro`, `foto2_livro`, `livro_descricao`) VALUES
+('O Pequeno Príncipe', 'Antoine de Saint-Exupéry', 'Ficção', 'pequeno1.jpg', 'pequeno2.jpg', 'Uma fábula sobre amor e amizade.'),
+('Dom Casmurro', 'Machado de Assis', 'Romance', 'casmurro1.jpg', 'casmurro2.jpg', 'Clássico da literatura brasileira.'),
+('1984', 'George Orwell', 'Distopia', '1984a.jpg', '1984b.jpg', 'Uma crítica ao totalitarismo.'),
+('Harry Potter e a Pedra Filosofal', 'J.K. Rowling', 'Fantasia', 'hp1.jpg', 'hp2.jpg', 'O início da jornada de Harry.'),
+('A Arte da Guerra', 'Sun Tzu', 'Estratégia', 'guerra1.jpg', 'guerra2.jpg', 'Princípios estratégicos milenares.');
+INSERT INTO `usuario` (`usuario_nome`, `usuario_email`, `usuario_senha`, `usuario_endereco`) VALUES
+('Ana Silva', 'ana@email.com', 'senha123', 'Rua das Flores, 100'),
+('Carlos Souza', 'carlos@email.com', 'abc12345', 'Av. Central, 200'),
+('Juliana Lima', 'juliana@email.com', 'juliana2025', 'Rua do Sol, 321'),
+('Marcos Paulo', 'marcos@email.com', 'marcosp!', 'Rua A, 999'),
+('Lúcia Torres', 'lucia@email.com', 'lucia456', 'Av. das Palmeiras, 88');
