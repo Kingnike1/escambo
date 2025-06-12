@@ -17,10 +17,11 @@ $sucesso = '';
 $sqlMeusLivros = "
   SELECT livro_id AS id_livro, livro_titulo AS titulo
   FROM livro
-  WHERE livro_id = ?
+  WHERE usuario_id = ?
 ";
 $stmt = mysqli_prepare($conexao, $sqlMeusLivros);
 mysqli_stmt_bind_param($stmt, "i", $idUsuario);
+
 mysqli_stmt_execute($stmt);
 $resultMeusLivros = mysqli_stmt_get_result($stmt);
 $meusLivros = mysqli_fetch_all($resultMeusLivros, MYSQLI_ASSOC);
@@ -32,11 +33,12 @@ mysqli_stmt_close($stmt);
 $sqlOutrosLivros = "
   SELECT l.livro_id AS id_livro, l.livro_titulo AS titulo, u.usuario_nome
   FROM livro l
-  JOIN usuario u ON l.livro_id = u.id_usuario
-  WHERE l.livro_id != ?
+  JOIN usuario u ON l.usuario_id = u.id_usuario
+  WHERE l.usuario_id != ?
 ";
 $stmt = mysqli_prepare($conexao, $sqlOutrosLivros);
 mysqli_stmt_bind_param($stmt, "i", $idUsuario);
+
 mysqli_stmt_execute($stmt);
 $resultOutrosLivros = mysqli_stmt_get_result($stmt);
 $outrosLivros = mysqli_fetch_all($resultOutrosLivros, MYSQLI_ASSOC);
@@ -53,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $erro = "Escolha ambos os livros para propor a troca.";
   } else {
     // Buscar dono do livro desejado
-    $sqlDestinatario = "SELECT usuario_id FROM livro WHERE livro_id = ?";
+  $sqlDestinatario = "SELECT usuario_id FROM livro WHERE livro_id = ?";
     $stmt = mysqli_prepare($conexao, $sqlDestinatario);
     mysqli_stmt_bind_param($stmt, "i", $idLivroDesejado);
     mysqli_stmt_execute($stmt);
