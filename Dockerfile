@@ -1,16 +1,17 @@
 FROM php:8.2-apache
 
-# Corrigir conflito de MPM
-RUN a2dismod mpm_event mpm_worker || true
+# 🔥 GARANTE que só um MPM vai rodar
+RUN a2dismod mpm_event || true
+RUN a2dismod mpm_worker || true
 RUN a2enmod mpm_prefork
 
-# Instalar extensões necessárias
+# Instalar extensões
 RUN docker-php-ext-install mysqli
 
-# Habilitar mod_rewrite
+# Rewrite
 RUN a2enmod rewrite
 
-# Configurações PHP
+# PHP config
 RUN { \
     echo 'upload_max_filesize = 10M'; \
     echo 'post_max_size = 12M'; \
