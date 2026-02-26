@@ -1,12 +1,16 @@
 FROM php:8.2-apache
 
+# Corrigir conflito de MPM
+RUN a2dismod mpm_event mpm_worker || true
+RUN a2enmod mpm_prefork
+
 # Instalar extensões necessárias
 RUN docker-php-ext-install mysqli
 
-# Habilitar mod_rewrite para URLs amigáveis (opcional)
+# Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# Configurações de segurança e upload no php.ini
+# Configurações PHP
 RUN { \
     echo 'upload_max_filesize = 10M'; \
     echo 'post_max_size = 12M'; \
@@ -16,5 +20,4 @@ RUN { \
     echo 'session.use_strict_mode = 1'; \
 } > /usr/local/etc/php/conf.d/escambo.ini
 
-# Definir diretório de trabalho
 WORKDIR /var/www/html
