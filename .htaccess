@@ -1,0 +1,15 @@
+# Proteger diretório inc/ de acesso direto
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^inc/ - [F,L]
+</IfModule>
+
+# Desabilitar listagem de diretórios
+Options -Indexes
+
+# Proteger uploads contra execução de PHP
+<FilesMatch "\.(php|php3|php4|php5|phtml)$">
+    <If "%{REQUEST_URI} =~ m#^/uploads/#">
+        Deny from all
+    </If>
+</FilesMatch>

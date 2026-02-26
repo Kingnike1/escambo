@@ -1,21 +1,41 @@
 services:
   php:
     build: .
-    container_name: "apache_php"
-    image: php:8.1.16-apache
+    container_name: escambo_php
+    restart: unless-stopped
     volumes:
       - ./:/var/www/html/
     ports:
       - "83:80"
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: "${DB_ROOT_PASSWORD:-123}"
+      DB_NAME: escambo
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
-    image: mariadb:10.5
-    container_name: "mariadb-server"
-    restart: always
-    volumes: 
-      - ./codigo-banco.sql:/docker-entrypoint-initdb.d/codigo-banco.sql
+    image: mariadb:10.11
+    container_name: escambo_db
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./codigo-banco.sql:/docker-entrypoint-initdb.d/codigo-banco.sql:ro
     environment:
-      - MARIADB_USER=root
-      - MARIADB_ROOT_PASSWORD=123
+      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-123}"
+      MARIADB_DATABASE: escambo
+      MARIADB_CHARACTER_SET_SERVER: utf8mb4
+      MARIADB_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
       - "3307:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  db_data:

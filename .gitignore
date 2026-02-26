@@ -1,0 +1,27 @@
+# Uploads de usuários
+/uploads/
+
+# Ambiente local
+.env
+*.env.local
+
+# Arquivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Dependências
+/vendor/
+/node_modules/
+
+# Logs
+*.log
+
+# Arquivos de banco de dados locais
+*.sql.bak
+banco-escambo.mwb

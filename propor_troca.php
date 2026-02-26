@@ -1,153 +1,79 @@
 <?php
 session_start();
-require 'conexao.php';
-
-if (!isset($_SESSION['usuario'])) {
-    header('Location: login.php');
-    exit;
-}
-
-$idUsuario = $_SESSION['usuario']['id'];
-$erro = '';
-$sucesso = '';
-
-/**
- * Buscar livros do usuário logado
- */
-$sqlMeusLivros = "
-  SELECT livro_id AS id_livro, livro_titulo AS titulo
-  FROM livro
-  WHERE usuario_id = ?
-";
-$stmt = mysqli_prepare($conexao, $sqlMeusLivros);
-mysqli_stmt_bind_param($stmt, "i", $idUsuario);
-
-mysqli_stmt_execute($stmt);
-$resultMeusLivros = mysqli_stmt_get_result($stmt);
-$meusLivros = mysqli_fetch_all($resultMeusLivros, MYSQLI_ASSOC);
-mysqli_stmt_close($stmt);
-
-/**
- * Buscar livros de outros usuários
- */
-$sqlOutrosLivros = "
-  SELECT l.livro_id AS id_livro, l.livro_titulo AS titulo, u.usuario_nome
-  FROM livro l
-  JOIN usuario u ON l.usuario_id = u.id_usuario
-  WHERE l.usuario_id != ?
-";
-$stmt = mysqli_prepare($conexao, $sqlOutrosLivros);
-mysqli_stmt_bind_param($stmt, "i", $idUsuario);
-
-mysqli_stmt_execute($stmt);
-$resultOutrosLivros = mysqli_stmt_get_result($stmt);
-$outrosLivros = mysqli_fetch_all($resultOutrosLivros, MYSQLI_ASSOC);
-mysqli_stmt_close($stmt);
-
-/**
- * Processar envio do formulário
- */
+if (!isset($_SESSION['usuario'])) { header('Location: login.php'); exit; }
+require_once __DIR__ . '/inc/conexao.php';
+$idUsuario = (int)$_SESSION['usuario']['id'];
+$erro = ''; $sucesso = '';
+$stmt = mysqli_prepare($conexao, "SELECT livro_id AS id_livro, livro_titulo AS titulo FROM livro WHERE usuario_id = ? AND disponivel = 1 ORDER BY livro_titulo");
+mysqli_stmt_bind_param($stmt,'i',$idUsuario); mysqli_stmt_execute($stmt);
+$meusLivros = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC); mysqli_stmt_close($stmt);
+$stmt = mysqli_prepare($conexao, "SELECT l.livro_id AS id_livro, l.livro_titulo AS titulo, u.usuario_nome FROM livro l JOIN usuario u ON l.usuario_id = u.id_usuario WHERE l.usuario_id != ? AND l.disponivel = 1 ORDER BY l.livro_titulo");
+mysqli_stmt_bind_param($stmt,'i',$idUsuario); mysqli_stmt_execute($stmt);
+$outrosLivros = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC); mysqli_stmt_close($stmt);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $idLivroDesejado = intval($_POST['livro_desejado'] ?? 0);
-  $idLivroOferecido = intval($_POST['livro_oferecido'] ?? 0);
-
-  if (!$idLivroDesejado || !$idLivroOferecido) {
-    $erro = "Escolha ambos os livros para propor a troca.";
-  } else {
-    // Buscar dono do livro desejado
-  $sqlDestinatario = "SELECT usuario_id FROM livro WHERE livro_id = ?";
-    $stmt = mysqli_prepare($conexao, $sqlDestinatario);
-    mysqli_stmt_bind_param($stmt, "i", $idLivroDesejado);
-    mysqli_stmt_execute($stmt);
-    $resultDestinatario = mysqli_stmt_get_result($stmt);
-    $rowDestinatario = mysqli_fetch_assoc($resultDestinatario);
-    mysqli_stmt_close($stmt);
-
-    if (!$rowDestinatario) {
-      $erro = "Livro desejado inválido.";
-    } else {
-      $usuarioIdDestinatario = $rowDestinatario['usuario_id'];
-      $dataHoje = date('Y-m-d');
-
-      $sqlInserir = "
-        INSERT INTO troca (
-          troca_data, troca_status, usuario_id_proponente, usuario_id_destinatario,
-          livro_livro_id_desejado, livro_livro_oferecido
-        ) VALUES (?, 'pendente', ?, ?, ?, ?)
-      ";
-      $stmt = mysqli_prepare($conexao, $sqlInserir);
-      mysqli_stmt_bind_param(
-        $stmt,
-        "siiii",
-        $dataHoje,
-        $idUsuario,
-        $usuarioIdDestinatario,
-        $idLivroDesejado,
-        $idLivroOferecido
-      );
-      $ok = mysqli_stmt_execute($stmt);
-      mysqli_stmt_close($stmt);
-
-      if ($ok) {
-        $sucesso = "Proposta de troca enviada com sucesso!";
-      } else {
-        $erro = "Erro ao enviar proposta. Tente novamente.";
-      }
+    $idDesejado = intval($_POST['livro_desejado'] ?? 0);
+    $idOferecido = intval($_POST['livro_oferecido'] ?? 0);
+    $mensagem = trim($_POST['mensagem'] ?? '');
+    if (!$idDesejado || !$idOferecido) { $erro = 'Escolha ambos os livros.'; }
+    else {
+        $stmt = mysqli_prepare($conexao, "SELECT usuario_id FROM livro WHERE livro_id = ? AND disponivel = 1");
+        mysqli_stmt_bind_param($stmt,'i',$idDesejado); mysqli_stmt_execute($stmt);
+        $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)); mysqli_stmt_close($stmt);
+        if (!$row) { $erro = 'Livro nao encontrado ou indisponivel.'; }
+        else {
+            $idDest = (int)$row['usuario_id'];
+            $sql = "INSERT INTO troca (troca_status,usuario_id_proponente,usuario_id_destinatario,livro_livro_id_desejado,livro_livro_oferecido,mensagem) VALUES ('pendente',?,?,?,?,?)";
+            $stmt = mysqli_prepare($conexao, $sql);
+            mysqli_stmt_bind_param($stmt,'iiiss',$idUsuario,$idDest,$idDesejado,$idOferecido,$mensagem);
+            $ok = mysqli_stmt_execute($stmt); mysqli_stmt_close($stmt);
+            if ($ok) { $sucesso = 'Proposta enviada com sucesso!'; }
+            else { $erro = 'Erro ao enviar proposta.'; }
+        }
     }
-  }
 }
-
-
 ?>
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8" />
-    <title>Propor Troca de Livro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
-    <div class="bg-white rounded shadow p-6 max-w-lg w-full">
-        <h1 class="text-2xl font-bold mb-6">Propor Troca de Livro</h1>
-
-        <?php if ($erro): ?>
-            <div class="bg-red-100 text-red-700 border border-red-400 rounded px-4 py-2 mb-4"><?= htmlspecialchars($erro) ?></div>
-        <?php endif; ?>
-        <?php if ($sucesso): ?>
-            <div class="bg-green-100 text-green-700 border border-green-400 rounded px-4 py-2 mb-4"><?= htmlspecialchars($sucesso) ?></div>
-        <?php endif; ?>
-
-        <form method="POST" class="space-y-4">
-            <div>
-                <label for="livro_desejado" class="block font-semibold mb-1">Livro Desejado (de outro usuário)</label>
-                <select id="livro_desejado" name="livro_desejado" required
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">-- Escolha um livro --</option>
-                    <?php foreach ($outrosLivros as $livro): ?>
-                        <option value="<?= $livro['id_livro'] ?>">
-                            <?= htmlspecialchars($livro['titulo']) ?> (Dono: <?= htmlspecialchars($livro['usuario_nome']) ?>)
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div>
-                <label for="livro_oferecido" class="block font-semibold mb-1">Seu Livro para Oferecer</label>
-                <select id="livro_oferecido" name="livro_oferecido" required
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <option value="">-- Escolha um dos seus livros --</option>
-                    <?php foreach ($meusLivros as $livro): ?>
-                        <option value="<?= $livro['id_livro'] ?>">
-                            <?= htmlspecialchars($livro['titulo']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <button type="submit"
-                class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Propor Troca</button>
-        </form>
-    </div>
-</body>
-</html>
+<!DOCTYPE html><html lang="pt-BR">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Propor Troca - Escambo</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+<?php include __DIR__ . '/inc/navbar.php'; ?>
+<main class="flex-1 flex items-start justify-center p-6">
+<div class="bg-white max-w-lg w-full rounded-2xl shadow-lg p-8 mt-4">
+<h1 class="text-2xl font-bold text-gray-800 mb-6">Propor Troca de Livro</h1>
+<?php if($erro):?><div class="bg-red-50 border border-red-300 text-red-700 px-4 py-2 rounded-lg mb-4 text-sm"><?=htmlspecialchars($erro)?></div><?php endif;?>
+<?php if($sucesso):?><div class="bg-green-50 border border-green-300 text-green-700 px-4 py-2 rounded-lg mb-4 text-sm"><?=htmlspecialchars($sucesso)?></div><?php endif;?>
+<?php if(empty($meusLivros)):?>
+<div class="bg-amber-50 border border-amber-300 text-amber-700 px-4 py-3 rounded-lg text-sm">
+Voce nao possui livros disponiveis. <a href="adicionar_livro.php" class="font-semibold underline">Adicionar um livro</a>.
+</div>
+<?php elseif(empty($outrosLivros)):?>
+<div class="bg-blue-50 border border-blue-300 text-blue-700 px-4 py-3 rounded-lg text-sm">
+Nao ha livros de outros usuarios disponiveis no momento.
+</div>
+<?php else:?>
+<form method="POST" class="space-y-4">
+<div><label for="livro_desejado" class="block text-sm font-semibold text-gray-700 mb-1">Livro que voce deseja</label>
+<select id="livro_desejado" name="livro_desejado" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+<option value="">-- Escolha um livro --</option>
+<?php foreach($outrosLivros as $l):?>
+<option value="<?=(int)$l['id_livro']?>"><?=htmlspecialchars($l['titulo'])?> (de <?=htmlspecialchars($l['usuario_nome'])?>)</option>
+<?php endforeach;?>
+</select></div>
+<div><label for="livro_oferecido" class="block text-sm font-semibold text-gray-700 mb-1">Seu livro para oferecer</label>
+<select id="livro_oferecido" name="livro_oferecido" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+<option value="">-- Escolha um dos seus livros --</option>
+<?php foreach($meusLivros as $l):?>
+<option value="<?=(int)$l['id_livro']?>"><?=htmlspecialchars($l['titulo'])?></option>
+<?php endforeach;?>
+</select></div>
+<div><label for="mensagem" class="block text-sm font-semibold text-gray-700 mb-1">Mensagem <span class="text-gray-400 font-normal">(opcional)</span></label>
+<textarea id="mensagem" name="mensagem" rows="3" placeholder="Deixe uma mensagem..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea></div>
+<div class="flex justify-between items-center pt-2">
+<a href="painel.php" class="text-gray-500 hover:underline text-sm">Voltar ao Painel</a>
+<button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold text-sm">Enviar Proposta</button>
+</div>
+</form>
+<?php endif;?>
+</div></main>
+<footer class="text-center text-xs text-gray-400 py-4">&copy; <?=date('Y')?> Escambo</footer>
+</body></html>

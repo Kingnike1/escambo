@@ -1,9 +1,6 @@
 <?php
-    $servidor = "db";
-    $usuario = "root";
-    $senha = "123";
-    $banco = "escambo";
-
-    $conexao = mysqli_connect($servidor, $usuario, $senha, $banco);
-
-?>
+/**
+ * Arquivo mantido por compatibilidade.
+ * A conexao foi movida para inc/conexao.php
+ */
+require_once __DIR__ . '/inc/conexao.php';
