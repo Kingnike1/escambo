@@ -1,25 +1,24 @@
 FROM php:8.2-apache
 
-# 🔥 REMOVE QUALQUER MPM carregado
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load
+# 🔥 Limpa QUALQUER MPM existente
+RUN find /etc/apache2 -name "mpm_*.load" -delete
+RUN find /etc/apache2 -name "mpm_*.conf" -delete
 
-# 🔥 ATIVA SOMENTE O PREFORK (compatível com PHP)
+# 🔥 Recria só o prefork
+RUN echo "LoadModule mpm_prefork_module /usr/lib/apache2/modules/mod_mpm_prefork.so" > /etc/apache2/mods-available/mpm_prefork.load
 RUN a2enmod mpm_prefork
 
-# Instalar extensões
+# PHP
 RUN docker-php-ext-install mysqli
 
-# Ativar rewrite
+# Rewrite
 RUN a2enmod rewrite
 
-# Configuração PHP
+# Config PHP
 RUN { \
     echo 'upload_max_filesize = 10M'; \
     echo 'post_max_size = 12M'; \
     echo 'max_execution_time = 30'; \
-    echo 'expose_php = Off'; \
-    echo 'session.cookie_httponly = 1'; \
-    echo 'session.use_strict_mode = 1'; \
-} > /usr/local/etc/php/conf.d/escambo.ini
+} > /usr/local/etc/php/conf.d/custom.ini
 
 WORKDIR /var/www/html
